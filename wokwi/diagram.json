@@ -1,0 +1,275 @@
+{
+  "version": 1,
+  "author": "SLT IoT Digital Society",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-hc-sr04",
+      "id": "tank",
+      "top": -150,
+      "left": 140,
+      "attrs": {
+        "distance": "120"
+      }
+    },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr",
+      "top": 20,
+      "left": 150,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir",
+      "top": 110,
+      "left": 160,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht",
+      "top": -140,
+      "left": -20,
+      "attrs": {
+        "temperature": "29",
+        "humidity": "70"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "lamp",
+      "top": -30,
+      "left": -190,
+      "attrs": {
+        "color": "yellow",
+        "label": "LAMP"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "pump",
+      "top": -30,
+      "left": -140,
+      "attrs": {
+        "color": "blue",
+        "label": "PUMP"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "alarm",
+      "top": -30,
+      "left": -90,
+      "attrs": {
+        "color": "red",
+        "label": "ALARM"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 60,
+      "left": -200,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 60,
+      "left": -150,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": 60,
+      "left": -100,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz",
+      "top": 170,
+      "left": -160,
+      "attrs": {
+        "volume": "0.1"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "tank:VCC",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "tank:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "tank:TRIG",
+      "esp:5",
+      "orange",
+      []
+    ],
+    [
+      "tank:ECHO",
+      "esp:18",
+      "green",
+      []
+    ],
+    [
+      "ldr:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "ldr:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "ldr:AO",
+      "esp:34",
+      "violet",
+      []
+    ],
+    [
+      "pir:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "pir:GND",
+      "esp:GND.3",
+      "black",
+      []
+    ],
+    [
+      "pir:OUT",
+      "esp:19",
+      "blue",
+      []
+    ],
+    [
+      "dht:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "dht:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "dht:SDA",
+      "esp:15",
+      "orange",
+      []
+    ],
+    [
+      "esp:25",
+      "r1:2",
+      "yellow",
+      []
+    ],
+    [
+      "r1:1",
+      "lamp:A",
+      "yellow",
+      []
+    ],
+    [
+      "lamp:C",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "esp:26",
+      "r2:2",
+      "blue",
+      []
+    ],
+    [
+      "r2:1",
+      "pump:A",
+      "blue",
+      []
+    ],
+    [
+      "pump:C",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "esp:27",
+      "r3:2",
+      "red",
+      []
+    ],
+    [
+      "r3:1",
+      "alarm:A",
+      "red",
+      []
+    ],
+    [
+      "alarm:C",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "bz:2",
+      "esp:13",
+      "magenta",
+      []
+    ],
+    [
+      "bz:1",
+      "esp:GND.1",
+      "black",
+      []
+    ]
+  ],
+  "dependencies": {}
+}

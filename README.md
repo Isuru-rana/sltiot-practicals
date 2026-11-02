@@ -1,0 +1,50 @@
+# SLT IoT Practicals: One Smart Home, One Smart Town
+
+Code for the live builds in "Implementation of Digital Transformation Society Using IoT" (SLT-Mobitel, 2 November 2026).
+
+Runs fully in the browser on [Wokwi](https://wokwi.com). No hardware needed.
+
+## Open and run (no sign-in needed)
+
+| Build | What it does | Wokwi link | Code |
+|---|---|---|---|
+| P1 Sense | Reads tank level, light, motion, temperature | https://wokwi.com/projects/479509506434049025 | `code/p1_sense` |
+| P2 Decide | Pump with two limits, lamp at dusk, alarms | https://wokwi.com/projects/479509527028083713 | `code/p2_edge` |
+| P3 Connect | WiFi + MQTT, joins the town wall, obeys orders | https://wokwi.com/projects/479509549692009473 | `code/p3_connect` |
+| P4 Control | Same code as P3, orders sent from outside | (use P3) | `code/p3_connect` |
+| P5 Alert | P3 + push alerts to your phone with ntfy | https://wokwi.com/projects/479509575344376833 | `code/p5_alert` |
+
+Open the link and press the green play button. Compiling can take 1 to 2 minutes on the free plan.
+
+## Build it yourself in Wokwi
+
+1. Open https://wokwi.com/projects/new/esp32
+2. **sketch.ino**: paste the sketch from `code/`.
+3. **diagram.json**: paste `wokwi/diagram.json` (the same circuit for every build).
+4. **Library Manager**: add `DHT sensor library` and `Adafruit Unified Sensor`. For P3 and P5, also add `PubSubClient`.
+5. Press play.
+
+## Make it your home
+
+- In P3 and P5, change `HOME_ID` (e.g. "KANDY-07") so your home has its own name on the town wall.
+- In P5, change `NTFY_TOPIC` to a unique name. Then subscribe to the same name in the ntfy phone app.
+
+## MQTT topics (broker.hivemq.com)
+
+| Topic | Direction | Content |
+|---|---|---|
+| `sltiot/<HOME>/telemetry` | home to town | JSON: tank, pump, light, lamp, motion, temp, alarms |
+| `sltiot/<HOME>/status` | home to town | `online` or `offline` (Last Will) |
+| `sltiot/<HOME>/event` | home to town | Alarm raised or cleared |
+| `sltiot/<HOME>/cmd` | town to home | `PUMP_ON`, `PUMP_OFF`, `AUTO` |
+| `sltiot/town/cmd` | town to all homes | `RATION_ON`, `RATION_OFF` |
+
+Send orders with the HiveMQ web client: https://www.hivemq.com/demos/websocket-client/
+
+## The town (`town/`)
+
+- `town_wall.html`: the City Operations Wall. Open it in a browser to see every home live.
+  - View-only copy online: https://isuru-rana.github.io/sltiot-wall/
+- `town_sim.py`: simulates about 20 homes so the town is busy. Run it with `uv run town_sim.py`.
+
+The broker is public. Anyone can read these topics, so never send personal data.

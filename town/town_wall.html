@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Town Wall</title>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js" integrity="sha384-u4uqeACkFcoKl57rBQJHVGDd1pqhW4w8X3WjTu1ZksPdxoLqdt34jpoNkJisE25W" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #30363d; --text: #e6edf3; --dim: #8b949e;
+    --ok: #2ea043; --warn: #d29922; --bad: #f85149; --off: #484f58; --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 20px; margin: 0; letter-spacing: .5px; }
+  .pill { padding: 4px 10px; border-radius: 99px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; }
+  .pill b { font-size: 16px; }
+  #conn.on { color: var(--ok); } #conn.offline { color: var(--bad); }
+  input { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+  main { display: grid; grid-template-columns: 1fr 340px; gap: 16px; padding: 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 10px; align-content: start; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--ok); border-radius: 8px; padding: 7px 10px; font-size: 13px; }
+  .card.alarm { border-left-color: var(--bad); animation: pulse 1.2s infinite; }
+  .card.warn { border-left-color: var(--warn); }
+  .card.offline { border-left-color: var(--off); opacity: .55; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 3px rgba(248,81,73,.35); } }
+  .site { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; }
+  .site small { color: var(--dim); font-weight: 400; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; margin: 5px 0; font-variant-numeric: tabular-nums; }
+  .kv span:nth-child(odd) { color: var(--dim); }
+  .alarms { min-height: 20px; color: var(--bad); font-weight: 600; font-size: 13px; }
+  .alarms.ok { color: var(--ok); }
+  .btns { display: flex; gap: 4px; margin-top: 5px; }
+  button { flex: 1; background: #21262d; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 3px 0; cursor: pointer; font-size: 11px; white-space: nowrap; }
+  button:hover { border-color: var(--accent); }
+  aside { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; max-height: calc(100vh - 110px); overflow: auto; }
+  aside h2 { font-size: 15px; margin: 0 0 8px; }
+  #log div { font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+  #log .t { color: var(--dim); margin-right: 6px; }
+  #log .raised { color: var(--bad); } #log .cleared { color: var(--ok); }
+  .bar { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; margin-top: 2px; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .town { display: flex; gap: 6px; }
+  .town button { flex: none; padding: 5px 10px; }
+  .tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #1f6feb33; color: var(--accent); margin-left: 4px; }
+  .empty { color: var(--dim); padding: 40px 0; text-align: center; grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SLT Smart Town · City Operations Wall</h1>
+  <span class="pill">Homes <b id="nHomes">0</b></span>
+  <span class="pill">Avg water <b id="avgTank">–</b></span>
+  <span class="pill">Lamps on <b id="nLamps">0</b></span>
+  <span class="pill">In alarm <b id="nAlarm" style="color:var(--bad)">0</b></span>
+  <span class="pill">Offline <b id="nOff">0</b></span>
+  <span class="pill" id="conn">connecting…</span>
+  <span class="town">
+    <button id="rOn" title="Every home fills its tank only to 50 %">Town: RATION ON</button>
+    <button id="rOff">RATION OFF</button>
+  </span>
+  <input id="filter" placeholder="filter homes…">
+</header>
+<main>
+  <section id="grid"><div class="empty">Waiting for homes… start P3 in Wokwi.</div></section>
+  <aside><h2>Town event log</h2><div id="log"></div></aside>
+</main>
+
+<script>
+// Every participant ESP32 publishes to sltiot/<HOME>/telemetry|status|event
+// and listens on sltiot/<HOME>/cmd and sltiot/town/cmd
+const BROKER = "wss://broker.hivemq.com:8884/mqtt";
+const BASE = "sltiot";
+const STALE_MS = 20000;
+
+const homes = {};
+const grid = document.getElementById("grid");
+const log = document.getElementById("log");
+const conn = document.getElementById("conn");
+const filter = document.getElementById("filter");
+
+const client = mqtt.connect(BROKER, { clientId: "town-" + Math.random().toString(16).slice(2, 10) });
+client.on("connect", () => {
+  conn.textContent = "broker connected"; conn.className = "pill on";
+  client.subscribe([`${BASE}/+/telemetry`, `${BASE}/+/status`, `${BASE}/+/event`]);
+});
+client.on("close", () => { conn.textContent = "broker offline"; conn.className = "pill offline"; });
+
+client.on("message", (topic, payload) => {
+  const [, name, kind] = topic.split("/");
+  if (!name || name === "town" || name.length > 32) return;
+  const text = payload.toString();
+  const h = homes[name] ||= { data: null, lastSeen: 0, status: "?" };
+  if (kind === "telemetry") {
+    try { h.data = JSON.parse(text); h.lastSeen = Date.now(); h.status = "online"; } catch { return; }
+  } else if (kind === "status") {
+    h.status = text;
+    addLog(`${name} is ${text}`);
+  } else if (kind === "event") {
+    addLog(text);
+  }
+  render();
+});
+
+function addLog(text) {
+  const row = document.createElement("div");
+  const t = document.createElement("span");
+  t.className = "t"; t.textContent = new Date().toLocaleTimeString();
+  const m = document.createElement("span");
+  m.textContent = text;
+  m.className = /RAISED|offline/.test(text) ? "raised" : /cleared|online/.test(text) ? "cleared" : "";
+  row.append(t, m);
+  log.prepend(row);
+  while (log.children.length > 200) log.lastChild.remove();
+}
+
+function send(topic, cmd, label) {
+  client.publish(topic, cmd);
+  addLog(`CITY -> ${label}: ${cmd}`);
+}
+document.getElementById("rOn").onclick = () => send(`${BASE}/town/cmd`, "RATION_ON", "ALL HOMES");
+document.getElementById("rOff").onclick = () => send(`${BASE}/town/cmd`, "RATION_OFF", "ALL HOMES");
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function isOffline(h) { return h.status === "offline" || Date.now() - h.lastSeen > STALE_MS; }
+
+function render() {
+  const q = filter.value.trim().toLowerCase();
+  const names = Object.keys(homes).filter(n => n.toLowerCase().includes(q));
+  let nAlarm = 0, nOff = 0, nLamps = 0, tankSum = 0, tankN = 0;
+  const rank = n => { const h = homes[n]; return isOffline(h) ? 2 : (h.data && h.data.alarms ? 0 : 1); };
+  names.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  grid.replaceChildren();
+  if (!names.length) grid.append(el("div", "empty", "Waiting for homes… start P3 in Wokwi."));
+
+  for (const name of names) {
+    const h = homes[name], d = h.data || {};
+    const offline = isOffline(h);
+    const alarms = (d.alarms || "").trim();
+    const critical = /NIGHT MOTION|EMPTY/.test(alarms);
+    if (offline) nOff++;
+    else {
+      if (alarms) nAlarm++;
+      if (d.lamp === "ON") nLamps++;
+      if (typeof d.tank === "number") { tankSum += d.tank; tankN++; }
+    }
+    const card = el("div", "card" + (offline ? " offline" : critical ? " alarm" : alarms ? " warn" : ""));
+    const head = el("div", "site", name);
+    head.append(el("small", "", offline ? "OFFLINE" : `${d.rssi ?? "?"} dBm`));
+    const kv = el("div", "kv");
+    const tank = el("span");
+    tank.append(document.createTextNode(d.tank != null ? `${d.tank} %` : "–"));
+    if (d.tank != null) { const b = el("div", "bar"); const i = el("i"); i.style.width = d.tank + "%"; b.append(i); tank.append(b); }
+    const pump = el("span", "", d.pump ? `${d.pump} (${d.mode})` : "–");
+    if (d.ration) pump.append(el("span", "tag", "RATION"));
+    const rows = [
+      ["Water", tank],
+      ["Pump", pump],
+      ["Lamp", el("span", "", d.lamp ? `${d.lamp} (light ${d.light} %)` : "–")],
+      ["Motion", el("span", "", d.motion ? "DETECTED" : "none")],
+      ["Temp", el("span", "", d.temp != null ? `${d.temp} °C, ${d.hum} %` : "–")],
+    ];
+    for (const [k, v] of rows) kv.append(el("span", "", k), v);
+    const al = el("div", "alarms" + (alarms ? "" : " ok"), alarms || "OK");
+    const btns = el("div", "btns");
+    for (const cmd of ["PUMP_ON", "PUMP_OFF", "AUTO"]) {
+      const b = el("button", "", cmd.replace("_", " "));
+      b.onclick = () => send(`${BASE}/${name}/cmd`, cmd, name);
+      btns.append(b);
+    }
+    card.append(head, kv, al, btns);
+    grid.append(card);
+  }
+  document.getElementById("nHomes").textContent = names.length;
+  document.getElementById("nAlarm").textContent = nAlarm;
+  document.getElementById("nOff").textContent = nOff;
+  document.getElementById("nLamps").textContent = nLamps;
+  document.getElementById("avgTank").textContent = tankN ? Math.round(tankSum / tankN) + " %" : "–";
+}
+
+filter.oninput = render;
+setInterval(render, 5000);
+</script>
+</body>
+</html>
