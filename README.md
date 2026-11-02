@@ -12,6 +12,7 @@ Open it, then run P3 or P5: your home appears on the wall within about 10 second
 
 | Build | What it does | Wokwi link | Code |
 |---|---|---|---|
+| MQTT Basic | LDR + lamp, sends light level to the wall every 2 s (simplest MQTT example) | https://wokwi.com/projects/479572158508999681 | `code/p0_mqtt_basic` (circuit: `wokwi_basic/diagram.json`, library: PubSubClient) |
 | P1 Sense | Reads tank level, light, motion, temperature | https://wokwi.com/projects/479509506434049025 | `code/p1_sense` |
 | P2 Decide | Pump with two limits, lamp at dusk, alarms | https://wokwi.com/projects/479564845394356225 | `code/p2_edge` |
 | P3 Connect | WiFi + MQTT, joins the town wall, obeys orders | https://wokwi.com/projects/479564910238319617 | `code/p3_connect` |
