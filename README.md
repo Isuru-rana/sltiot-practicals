@@ -9,10 +9,10 @@ Runs fully in the browser on [Wokwi](https://wokwi.com). No hardware needed.
 | Build | What it does | Wokwi link | Code |
 |---|---|---|---|
 | P1 Sense | Reads tank level, light, motion, temperature | https://wokwi.com/projects/479509506434049025 | `code/p1_sense` |
-| P2 Decide | Pump with two limits, lamp at dusk, alarms | https://wokwi.com/projects/479509527028083713 | `code/p2_edge` |
-| P3 Connect | WiFi + MQTT, joins the town wall, obeys orders | https://wokwi.com/projects/479509549692009473 | `code/p3_connect` |
+| P2 Decide | Pump with two limits, lamp at dusk, alarms | https://wokwi.com/projects/479564845394356225 | `code/p2_edge` |
+| P3 Connect | WiFi + MQTT, joins the town wall, obeys orders | https://wokwi.com/projects/479564910238319617 | `code/p3_connect` |
 | P4 Control | Same code as P3, orders sent from outside | (use P3) | `code/p3_connect` |
-| P5 Alert | P3 + push alerts to your phone with ntfy | https://wokwi.com/projects/479509575344376833 | `code/p5_alert` |
+| P5 Alert | P3 + push alerts to your phone with ntfy | https://wokwi.com/projects/479564965871595521 | `code/p5_alert` |
 
 Open the link and press the green play button. Compiling can take 1 to 2 minutes on the free plan.
 
