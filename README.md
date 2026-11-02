@@ -43,7 +43,40 @@ Open the link and press the green play button. Compiling can take 1 to 2 minutes
 | `sltiot/<HOME>/cmd` | town to home | `PUMP_ON`, `PUMP_OFF`, `AUTO` |
 | `sltiot/town/cmd` | town to all homes | `RATION_ON`, `RATION_OFF` |
 
-Send orders with the HiveMQ web client: https://www.hivemq.com/demos/websocket-client/
+## Watch the messages and send orders (HiveMQ web client)
+
+Open https://www.hivemq.com/demos/websocket-client/
+
+**1. Connect**
+
+| Field | Value |
+|---|---|
+| Host | `broker.hivemq.com` |
+| Port | `8884` |
+| SSL | ticked |
+| Client ID | leave the random one |
+| Username / Password | empty |
+
+Press **Connect** (turns green). If 8884 fails, use port `8000` with SSL unticked.
+
+**2. Watch:** Subscriptions, then Add New Topic Subscription.
+
+| Topic | Shows |
+|---|---|
+| `sltiot/#` | everything (busy when the simulator runs) |
+| `sltiot/+/telemetry` | JSON data from every home |
+| `sltiot/+/event` | alarms raised or cleared |
+| `sltiot/+/status` | online and offline |
+| `sltiot/KANDY-07/#` | one home only (use its `HOME_ID`) |
+
+**3. Send orders:** in Publish, enter topic and message, QoS 0, Retain unticked.
+
+| Topic | Message | Effect |
+|---|---|---|
+| `sltiot/<HOME>/cmd` | `PUMP_ON`, `PUMP_OFF`, `AUTO` | one home's pump |
+| `sltiot/town/cmd` | `RATION_ON`, `RATION_OFF` | every home: pump stops at 50 % |
+
+Simulated homes send `"sim": true` in their JSON. Real Wokwi homes do not.
 
 ## The town (`town/`)
 
