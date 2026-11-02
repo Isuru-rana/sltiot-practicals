@@ -149,7 +149,7 @@ void setup() {
   topicEvent = base + "/event";
 
   Serial.print("Connecting to WiFi");
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  WiFi.begin(WIFI_SSID, WIFI_PASS, 6);   // Wokwi-GUEST is on channel 6: skips the scan, connects faster
   while (WiFi.status() != WL_CONNECTED) { Serial.print("."); delay(250); }
   Serial.println(" connected");
 
