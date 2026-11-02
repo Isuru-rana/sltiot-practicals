@@ -57,6 +57,7 @@
   <span class="pill">In alarm <b id="nAlarm" style="color:var(--bad)">0</b></span>
   <span class="pill">Offline <b id="nOff">0</b></span>
   <span class="pill" id="conn">connecting…</span>
+  <button id="simBtn" class="pill" style="cursor:pointer;color:inherit;font:inherit" title="Show or hide homes from town_sim.py">Simulated: shown</button>
   <span class="town">
     <button id="rOn" title="Every home fills its tank only to 50 %">Town: RATION ON</button>
     <button id="rOff">RATION OFF</button>
@@ -76,6 +77,12 @@ const BASE = "sltiot";
 const STALE_MS = 20000;
 
 const homes = {};
+let showSim = new URLSearchParams(location.search).get("sim") !== "0";
+try { if (localStorage.getItem("showSim") === "0") showSim = false; } catch {}
+const simBtn = document.getElementById("simBtn");
+function paintSimBtn() { simBtn.textContent = showSim ? "Simulated: shown" : "Simulated: hidden (real only)"; }
+simBtn.onclick = () => { showSim = !showSim; try { localStorage.setItem("showSim", showSim ? "1" : "0"); } catch {} paintSimBtn(); render(); };
+paintSimBtn();
 const grid = document.getElementById("grid");
 const log = document.getElementById("log");
 const conn = document.getElementById("conn");
@@ -94,12 +101,12 @@ client.on("message", (topic, payload) => {
   const text = payload.toString();
   const h = homes[name] ||= { data: null, lastSeen: 0, status: "?" };
   if (kind === "telemetry") {
-    try { h.data = JSON.parse(text); h.lastSeen = Date.now(); h.status = "online"; } catch { return; }
+    try { h.data = JSON.parse(text); h.lastSeen = Date.now(); h.status = "online"; h.sim = h.data.sim === true; } catch { return; }
   } else if (kind === "status") {
     h.status = text;
-    addLog(`${name} is ${text}`);
+    if (!h.sim) addLog(`${name} is ${text}`);
   } else if (kind === "event") {
-    addLog(text);
+    if (!h.sim) addLog(text);
   }
   render();
 });
@@ -134,7 +141,7 @@ function isOffline(h) { return h.status === "offline" || Date.now() - h.lastSeen
 
 function render() {
   const q = filter.value.trim().toLowerCase();
-  const names = Object.keys(homes).filter(n => n.toLowerCase().includes(q));
+  const names = Object.keys(homes).filter(n => n.toLowerCase().includes(q) && (showSim || (homes[n].data && !homes[n].sim)));
   let nAlarm = 0, nOff = 0, nLamps = 0, tankSum = 0, tankN = 0;
   const rank = n => { const h = homes[n]; return isOffline(h) ? 2 : (h.data && h.data.alarms ? 0 : 1); };
   names.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));

@@ -84,6 +84,7 @@ class Home:
             "mode": self.mode, "ration": ration, "light": light, "lamp": "ON" if dark else "OFF",
             "motion": self.motion, "temp": temp, "hum": self.hum, "alarms": " ".join(alarms),
             "rssi": self.rssi + random.randint(-4, 4),
+            "sim": True,                          # lets the wall hide simulated homes
         }
 
 

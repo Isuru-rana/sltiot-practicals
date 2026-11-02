@@ -50,5 +50,7 @@ Send orders with the HiveMQ web client: https://www.hivemq.com/demos/websocket-c
 - `town_wall.html`: the City Operations Wall. Open it in a browser to see every home live.
   - View-only copy online: https://isuru-rana.github.io/sltiot-wall/
 - `town_sim.py`: simulates about 20 homes so the town is busy. Run it with `uv run town_sim.py`.
+  - Its homes are tagged as simulated. Press **Simulated: shown** on the wall to hide them and see only real homes.
+  - Or open the wall with `?sim=0` at the end of the link.
 
 The broker is public. Anyone can read these topics, so never send personal data.
