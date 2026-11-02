@@ -4,6 +4,10 @@ Code for the live builds in "Implementation of Digital Transformation Society Us
 
 Runs fully in the browser on [Wokwi](https://wokwi.com). No hardware needed.
 
+**Live Smart Town wall (view only): https://isuru-rana.github.io/sltiot-wall/**
+
+Open it, then run P3 or P5: your home appears on the wall within about 10 seconds. Nothing to set up.
+
 ## Open and run (no sign-in needed)
 
 | Build | What it does | Wokwi link | Code |
